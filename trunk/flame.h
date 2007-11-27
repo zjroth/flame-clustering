@@ -132,6 +132,8 @@ struct Flame
 
 	float **fuzzyships;
 	
+	/* Number of clusters including the outlier group */
+	int count;
 	/* The last one is the outlier group. */
 	IntArray *clusters;
 	

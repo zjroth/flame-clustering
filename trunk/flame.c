@@ -438,6 +438,20 @@ void Flame_LocalApproximation( Flame *self, int steps, float epsilon )
 		even = ! even;
 		if( dev < epsilon ) break;
 	}
+	/* update the membership of all objects to remove clusters 
+	 * that contains only the CSO. */
+	for(i=0; i<n; i++){
+		int knn = self->nncounts[i];
+		int *ids = self->graph[i];
+		float *wt = self->weights[i];
+		float *fuzzy = fuzzyships[i];
+		float **fuzzy2 = fuzzyships2;
+		for(j=0; j<=m; j++){
+			fuzzy[j] = 0.0;
+			for(k=0; k<knn; k++) fuzzy[j] += wt[k] * fuzzy2[ ids[k] ][j];
+			dev += (fuzzy[j] - fuzzy2[i][j]) * (fuzzy[j] - fuzzy2[i][j]);
+		}
+	}
 }
 
 void IntArray_Push( IntArray *self, int value )
@@ -507,5 +521,18 @@ void Flame_MakeClusters( Flame *self, float thd )
 			}
 		}
 	}
+	/* removing empty clusters */
+	C = 0;
+	for(i=0; i<self->cso_count; i++){
+		if( self->clusters[i].size >0 ){
+			self->clusters[C] = self->clusters[i];
+			C ++;
+		}
+	}
+	/* keep the outlier group, even if its empty */
+	self->clusters[C] = self->clusters[self->cso_count];
+	C ++;
+	for(i=C; i<self->cso_count+1; i++) memset( self->clusters+i, 0, sizeof(IntArray) );
+	self->count = C;
 }
 
