@@ -65,14 +65,12 @@ float Flame_SQPearson( float *x, float *y, int m );
 float Flame_DotProduct( float *x, float *y, int m );
 float Flame_Covariance( float *x, float *y, int m );
 float Flame_Manhattan( float *x, float *y, int m );
-float Flame_Spearman( float *x, float *y, int m );
 float Flame_CosineDist( float *x, float *y, int m );
 float Flame_PearsonDist( float *x, float *y, int m );
 float Flame_UCPearsonDist( float *x, float *y, int m );
 float Flame_SQPearsonDist( float *x, float *y, int m );
 float Flame_DotProductDist( float *x, float *y, int m );
 float Flame_CovarianceDist( float *x, float *y, int m );
-float Flame_SpearmanDist( float *x, float *y, int m );
 
 enum DistSimTypes
 {
@@ -85,7 +83,6 @@ enum DistSimTypes
 	DST_DOT_PROD ,
 	DST_COVARIANCE ,
 	DST_MANHATTAN ,
-	DST_SPEARMAN_ROC ,
 	DST_NULL
 };
 typedef float (*DistFunction)( float *x, float *y, int m );
