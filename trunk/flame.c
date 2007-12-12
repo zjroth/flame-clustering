@@ -77,8 +77,7 @@ const DistFunction basicDistFunctions[] =
 	Flame_SQPearsonDist ,
 	Flame_DotProductDist ,
 	Flame_CovarianceDist ,
-	Flame_Manhattan ,
-	Flame_SpearmanDist
+	Flame_Manhattan 
 };
 
 float Flame_Euclidean( float *x, float *y, int m )
@@ -191,12 +190,6 @@ float Flame_Manhattan( float *x, float *y, int m )
 	for(i=0; i<m; i++ ) d += fabs( x[i] - y[i] );
 	return d;
 }
-float Flame_Spearman( float *x, float *y, int m )
-{
-	float d = 0;
-	int i;
-	return d;
-}
 float Flame_CosineDist( float *x, float *y, int m )
 {
 	return 1-Flame_Cosine( x, y, m );
@@ -220,10 +213,6 @@ float Flame_DotProductDist( float *x, float *y, int m )
 float Flame_CovarianceDist( float *x, float *y, int m )
 {
 	return 1-Flame_CovarianceDist( x, y, m );
-}
-float Flame_SpearmanDist( float *x, float *y, int m )
-{
-	return 1-Flame_SpearmanDist( x, y, m );
 }
 
 Flame* Flame_New()
@@ -344,7 +333,7 @@ void Flame_DefineSupports( Flame *self, int knn, float thd )
 		 * But in this definition, the weights are only dependent on 
 		 * the ranking of distances of the neighbors, so it is more 
 		 * robust against distance transformations. */
-		sum = k*(k+1)/2.0;
+		sum = 0.5*k*(k+1.0);
 		for(j=0; j<k; j++) self->weights[i][j] = (k-j) / sum;
 		
 		sum = 0.0;
@@ -400,18 +389,18 @@ void Flame_LocalApproximation( Flame *self, int steps, float epsilon )
 		memset( fuzzyships[i], 0, (m+1)*sizeof(float) );
 		if( obtypes[i] == OBT_SUPPORT ){
 			/* Full membership to the cluster represented by itself. */
-			fuzzyships[i][k] = 1;
-			fuzzyships2[i][k] = 1;
+			fuzzyships[i][k] = 1.0;
+			fuzzyships2[i][k] = 1.0;
 			k ++;
 		}else if( obtypes[i] == OBT_OUTLIER ){
 			/* Full membership to the outlier group. */
-			fuzzyships[i][m] = 1;
-			fuzzyships2[i][m] = 1;
+			fuzzyships[i][m] = 1.0;
+			fuzzyships2[i][m] = 1.0;
 		}else{
 			/* Equal memberships to all clusters and the outlier group.
 			 * Random initialization does not change the results. */
 			for(j=0; j<=m; j++)
-				fuzzyships[i][m] = fuzzyships2[i][m] = 1.0/(m+1);
+				fuzzyships[i][j] = fuzzyships2[i][j] = 1.0/(m+1);
 		}
 	}
 	for(t=0; t<steps; t++){
@@ -422,6 +411,7 @@ void Flame_LocalApproximation( Flame *self, int steps, float epsilon )
 			float *wt = self->weights[i];
 			float *fuzzy = fuzzyships[i];
 			float **fuzzy2 = fuzzyships2;
+			double sum = 0.0;
 			if( self->obtypes[i] != OBT_NORMAL ) continue;
 			if( even ){
 				fuzzy = fuzzyships2[i];
@@ -433,7 +423,9 @@ void Flame_LocalApproximation( Flame *self, int steps, float epsilon )
 				fuzzy[j] = 0.0;
 				for(k=0; k<knn; k++) fuzzy[j] += wt[k] * fuzzy2[ ids[k] ][j];
 				dev += (fuzzy[j] - fuzzy2[i][j]) * (fuzzy[j] - fuzzy2[i][j]);
+				sum += fuzzy[j];
 			}
+			for(j=0; j<=m; j++) fuzzy[j] = fuzzy[j] / sum;
 		}
 		even = ! even;
 		if( dev < epsilon ) break;
@@ -452,6 +444,8 @@ void Flame_LocalApproximation( Flame *self, int steps, float epsilon )
 			dev += (fuzzy[j] - fuzzy2[i][j]) * (fuzzy[j] - fuzzy2[i][j]);
 		}
 	}
+	for(i=0; i<n; i++) free( fuzzyships2[i] );
+	free( fuzzyships2 );
 }
 
 void IntArray_Push( IntArray *self, int value )
@@ -490,7 +484,7 @@ void Flame_MakeClusters( Flame *self, float thd )
 		free( self->clusters );
 	}
 	self->clusters = (IntArray*) calloc( C, sizeof(IntArray) );
-	if( thd <= EPSILON || thd >= 1.0-EPSILON ){
+	if( thd <0 || thd > 1.0 ){
 		/* Assign each object to the cluster 
 		 * in which it has the highest membership. */
 		for(i=0; i<N; i++){
@@ -534,5 +528,6 @@ void Flame_MakeClusters( Flame *self, float thd )
 	C ++;
 	for(i=C; i<self->cso_count+1; i++) memset( self->clusters+i, 0, sizeof(IntArray) );
 	self->count = C;
+	free( vals );
 }
 
