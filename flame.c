@@ -196,23 +196,23 @@ float Flame_CosineDist( float *x, float *y, int m )
 }
 float Flame_PearsonDist( float *x, float *y, int m )
 {
-	return 1-Flame_PearsonDist( x, y, m );
+	return 1-Flame_Pearson( x, y, m );
 }
 float Flame_UCPearsonDist( float *x, float *y, int m )
 {
-	return 1-Flame_UCPearsonDist( x, y, m );
+	return 1-Flame_UCPearson( x, y, m );
 }
 float Flame_SQPearsonDist( float *x, float *y, int m )
 {
-	return 1-Flame_SQPearsonDist( x, y, m );
+	return 1-Flame_SQPearson( x, y, m );
 }
 float Flame_DotProductDist( float *x, float *y, int m )
 {
-	return 1-Flame_DotProductDist( x, y, m );
+	return 1-Flame_DotProduct( x, y, m );
 }
 float Flame_CovarianceDist( float *x, float *y, int m )
 {
-	return 1-Flame_CovarianceDist( x, y, m );
+	return 1-Flame_Covariance( x, y, m );
 }
 
 Flame* Flame_New()
@@ -258,6 +258,7 @@ void Flame_SetMatrix( Flame *self, float *data[], int n, int m )
 	int i, j, k;
 	int MAX = sqrt( n ) + 10;
 	IndexFloat *vals = (IndexFloat*) calloc( n, sizeof(IndexFloat) );
+	if( MAX >= n ) MAX = n - 1;
 		
 	Flame_Clear( self );
 	self->N = n;
@@ -362,7 +363,7 @@ void Flame_DefineSupports( Flame *self, int knn, float thd )
 			if( d < fmin ) fmin = d;
 			/* To avoid defining neighboring objects or objects close 
 			 * to an outlier as CSOs.  */
-			if( self->obtypes[i] ) fmin = 0.0;
+			if( self->obtypes[ self->graph[i][j] ] ) fmin = 0.0;
 		}
 		if( fmin >= 1.0 ){
 			self->cso_count ++;
