@@ -1,0 +1,1 @@
+Fuzzy clustering by Local Approximation of MEmberships (FLAME) is a novel data clustering algorithm that defines clusters in the dense parts of a dataset and perform cluster assignment solely based on the neighborhood relationships among objects.
